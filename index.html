@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cross-Platform Snake Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>Score: <span id="score">0</span></h1>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        
+        <!-- Mobile Controls -->
+        <div class="mobile-controls">
+            <button class="ctrl-btn up" id="btnUp">▲</button>
+            <div class="middle-row">
+                <button class="ctrl-btn left" id="btnLeft">◀</button>
+                <div class="spacer"></div>
+                <button class="ctrl-btn right" id="btnRight">▶</button>
+            </div>
+            <button class="ctrl-btn down" id="btnDown">▼</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
