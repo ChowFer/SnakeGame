@@ -1,6 +1,12 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreElement = document.getElementById("score");
+const gameOverMenu = document.getElementById("gameOverMenu");
+const finalScoreElement = document.getElementById("finalScore");
+const deviceTypeElement = document.getElementById("deviceType");
+const nameInput = document.getElementById("playerName");
+const respawnBtn = document.getElementById("respawnBtn");
+const leaderboardList = document.getElementById("leaderboardList");
 
 const gridSize = 20;
 const tileCount = canvas.width / gridSize;
@@ -11,23 +17,82 @@ let dx = 1;
 let dy = 0; 
 let score = 0;
 let gameInterval;
+let isGameOver = false;
+
+function getDeviceType() {
+    const ua = navigator.userAgent;
+    if (/tablet|ipad|playbook|silk/i.test(ua)) return "Tablet";
+    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated/i.test(ua)) return "Mobile";
+    return "PC";
+}
 
 function startGame() {
-    gameInterval = setInterval(update, 120); // Slightly slower speed for better mobile handling
+    isGameOver = false;
+    gameOverMenu.classList.add("hidden");
+    gameInterval = setInterval(update, 120);
+    renderLeaderboard();
 }
 
 function update() {
+    if (isGameOver) return;
+
     moveSnake();
     
     if (checkGameOver()) {
+        isGameOver = true;
         clearInterval(gameInterval);
-        alert(`Game Over! Your score was ${score}.`);
-        resetGame();
+        showGameOverMenu();
         return;
     }
 
     checkFoodCollision();
     draw();
+}
+
+function showGameOverMenu() {
+    finalScoreElement.innerText = score;
+    deviceTypeElement.innerText = getDeviceType();
+    gameOverMenu.classList.remove("hidden");
+    nameInput.focus();
+}
+
+// Adjusted save logic to use the typed name string
+function handleSaveAndRespawn() {
+    let name = nameInput.value.trim();
+    if (name === "") name = "Player"; // Default fallback names
+
+    let leaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
+    
+    const newEntry = {
+        name: name,
+        score: score,
+        device: getDeviceType(),
+        date: new Date().toLocaleDateString()
+    };
+    
+    leaderboard.push(newEntry);
+    leaderboard.sort((a, b) => b.score - a.score);
+    leaderboard = leaderboard.slice(0, 5); // Keep top 5 entries
+    
+    localStorage.setItem("snakeLeaderboard", JSON.stringify(leaderboard));
+    
+    resetGame();
+}
+
+function renderLeaderboard() {
+    const leaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
+    leaderboardList.innerHTML = "";
+
+    if (leaderboard.length === 0) {
+        leaderboardList.innerHTML = "<li>No high scores recorded yet</li>";
+        return;
+    }
+
+    leaderboard.forEach(entry => {
+        const li = document.createElement("li");
+        li.innerHTML = `${entry.name}: <strong>${entry.score}</strong> <span class="device-tag">${entry.device}</span>`;
+        leaderboardList.appendChild(li);
+    });
 }
 
 function draw() {
@@ -42,13 +107,17 @@ function draw() {
 }
 
 function moveSnake() {
-    const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+    const head = { x: snake.x + dx, y: snake.y + dy };
     snake.unshift(head);
     snake.pop();
 }
 
-// Direction Change logic function
 function changeDirection(direction) {
+    if (isGameOver) return;
+    
+    // Ignore direction shifts if user is typing inside the name text field
+    if (document.activeElement === nameInput) return;
+
     switch (direction) {
         case "UP":    if (dy === 0) { dx = 0; dy = -1; } break;
         case "DOWN":  if (dy === 0) { dx = 0; dy = 1; } break;
@@ -57,28 +126,28 @@ function changeDirection(direction) {
     }
 }
 
-// PC Controls (Keyboard)
 window.addEventListener("keydown", e => {
+    // If the game-over screen is active and user presses "Enter", trigger the button submission automatically
+    if (isGameOver && e.key === "Enter") {
+        handleSaveAndRespawn();
+        return;
+    }
+
     if (e.key === "ArrowUp") changeDirection("UP");
     if (e.key === "ArrowDown") changeDirection("DOWN");
     if (e.key === "ArrowLeft") changeDirection("LEFT");
     if (e.key === "ArrowRight") changeDirection("RIGHT");
 });
 
-// Mobile Controls (Touch Buttons)
 document.getElementById("btnUp").addEventListener("touchstart", (e) => { e.preventDefault(); changeDirection("UP"); });
 document.getElementById("btnDown").addEventListener("touchstart", (e) => { e.preventDefault(); changeDirection("DOWN"); });
 document.getElementById("btnLeft").addEventListener("touchstart", (e) => { e.preventDefault(); changeDirection("LEFT"); });
 document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); changeDirection("RIGHT"); });
 
-// Optional: Keep click events for desktop mouse testing of buttons
-document.getElementById("btnUp").addEventListener("click", () => changeDirection("UP"));
-document.getElementById("btnDown").addEventListener("click", () => changeDirection("DOWN"));
-document.getElementById("btnLeft").addEventListener("click", () => changeDirection("LEFT"));
-document.getElementById("btnRight").addEventListener("click", () => changeDirection("RIGHT"));
+respawnBtn.addEventListener("click", handleSaveAndRespawn);
 
 function checkFoodCollision() {
-    if (snake[0].x === food.x && snake[0].y === food.y) {
+    if (snake.x === food.x && snake.y === food.y) {
         score++;
         scoreElement.innerText = score;
         growSnake();
@@ -94,14 +163,13 @@ function growSnake() {
 function generateFood() {
     food.x = Math.floor(Math.random() * tileCount);
     food.y = Math.floor(Math.random() * tileCount);
-    
     if (snake.some(part => part.x === food.x && part.y === food.y)) {
         generateFood();
     }
 }
 
 function checkGameOver() {
-    const head = snake[0];
+    const head = snake;
     const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
     const hitSelf = snake.slice(1).some(part => part.x === head.x && part.y === head.y);
     return hitWall || hitSelf;

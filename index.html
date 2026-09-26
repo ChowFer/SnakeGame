@@ -9,7 +9,24 @@
 <body>
     <div class="game-container">
         <h1>Score: <span id="score">0</span></h1>
-        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        
+        <div class="canvas-container">
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+            
+            <!-- Updated Game Over Menu Overlay with Name Input -->
+            <div id="gameOverMenu" class="overlay hidden">
+                <h2>GAME OVER</h2>
+                <p>Your Score: <span id="finalScore">0</span></p>
+                <p>Device: <span id="deviceType">PC</span></p>
+                
+                <div class="input-container">
+                    <label for="playerName">Enter Your Name:</label>
+                    <input type="text" id="playerName" placeholder="Player" maxlength="10">
+                </div>
+
+                <button id="respawnBtn">Save & Respawn ↻</button>
+            </div>
+        </div>
         
         <!-- Mobile Controls -->
         <div class="mobile-controls">
@@ -20,6 +37,14 @@
                 <button class="ctrl-btn right" id="btnRight">▶</button>
             </div>
             <button class="ctrl-btn down" id="btnDown">▼</button>
+        </div>
+
+        <!-- Leaderboard section -->
+        <div class="leaderboard-container">
+            <h3>🏆 Local Leaderboard</h3>
+            <ol id="leaderboardList">
+                <!-- Scores populated dynamically by JS -->
+            </ol>
         </div>
     </div>
     <script src="script.js"></script>
