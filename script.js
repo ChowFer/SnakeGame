@@ -56,10 +56,9 @@ function showGameOverMenu() {
     nameInput.focus();
 }
 
-// Adjusted save logic to use the typed name string
 function handleSaveAndRespawn() {
     let name = nameInput.value.trim();
-    if (name === "") name = "Player"; // Default fallback names
+    if (name === "") name = "Player"; 
 
     let leaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
     
@@ -72,7 +71,7 @@ function handleSaveAndRespawn() {
     
     leaderboard.push(newEntry);
     leaderboard.sort((a, b) => b.score - a.score);
-    leaderboard = leaderboard.slice(0, 5); // Keep top 5 entries
+    leaderboard = leaderboard.slice(0, 5); 
     
     localStorage.setItem("snakeLeaderboard", JSON.stringify(leaderboard));
     
@@ -107,15 +106,14 @@ function draw() {
 }
 
 function moveSnake() {
-    const head = { x: snake.x + dx, y: snake.y + dy };
+    // FIXED: Correctly tracking the head segment array index position
+    const head = { x: snake[0].x + dx, y: snake[0].y + dy };
     snake.unshift(head);
     snake.pop();
 }
 
 function changeDirection(direction) {
     if (isGameOver) return;
-    
-    // Ignore direction shifts if user is typing inside the name text field
     if (document.activeElement === nameInput) return;
 
     switch (direction) {
@@ -127,7 +125,6 @@ function changeDirection(direction) {
 }
 
 window.addEventListener("keydown", e => {
-    // If the game-over screen is active and user presses "Enter", trigger the button submission automatically
     if (isGameOver && e.key === "Enter") {
         handleSaveAndRespawn();
         return;
@@ -147,7 +144,8 @@ document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.pr
 respawnBtn.addEventListener("click", handleSaveAndRespawn);
 
 function checkFoodCollision() {
-    if (snake.x === food.x && snake.y === food.y) {
+    // FIXED: Correctly matching against the head coordinate element layout
+    if (snake[0].x === food.x && snake[0].y === food.y) {
         score++;
         scoreElement.innerText = score;
         growSnake();
@@ -169,7 +167,8 @@ function generateFood() {
 }
 
 function checkGameOver() {
-    const head = snake;
+    // FIXED: Properly isolated check conditions using indices
+    const head = snake[0];
     const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
     const hitSelf = snake.slice(1).some(part => part.x === head.x && part.y === head.y);
     return hitWall || hitSelf;
@@ -185,15 +184,4 @@ function resetGame() {
     startGame();
 }
 
-function checkGameOver() {
-    // Ensure the snake actually has a head segment before checking coordinates
-    if (!snake || snake.length === 0) return true; 
-
-    const head = snake[0];
-    const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
-    
-    // Check if head hits any other part of its body
-    const hitSelf = snake.slice(1).some(part => part.x === head.x && part.y === head.y);
-    
-    return hitWall || hitSelf;
-}
+startGame();
