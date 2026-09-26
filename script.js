@@ -185,4 +185,15 @@ function resetGame() {
     startGame();
 }
 
-startGame();
+function checkGameOver() {
+    // Ensure the snake actually has a head segment before checking coordinates
+    if (!snake || snake.length === 0) return true; 
+
+    const head = snake[0];
+    const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
+    
+    // Check if head hits any other part of its body
+    const hitSelf = snake.slice(1).some(part => part.x === head.x && part.y === head.y);
+    
+    return hitWall || hitSelf;
+}
