@@ -1,3 +1,7 @@
+const SUPABASE_URL = "https://qwloipgyebuzhwrzexwd.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "sb_publishable_iObsx73FyMNLDis5Zq0l2A_AmXFPdk4";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreElement = document.getElementById("score");
@@ -21,16 +25,16 @@ let isGameOver = false;
 
 function getDeviceType() {
     const ua = navigator.userAgent;
-    if (/tablet|ipad|playbook|silk/i.test(ua)) return "Tablet";
-    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated/i.test(ua)) return "Mobile";
+    if (/tablet|ipad|playbook|silk/i.test(ua)) return "Tab";
+    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated/i.test(ua)) return "Phn";
     return "PC";
 }
 
 function startGame() {
     isGameOver = false;
     gameOverMenu.classList.add("hidden");
-    gameInterval = setInterval(update, 120);
-    renderLeaderboard();
+    gameInterval = setInterval(update, 110);
+    renderGlobalLeaderboard();
 }
 
 function update() {
@@ -55,58 +59,80 @@ function showGameOverMenu() {
     gameOverMenu.classList.remove("hidden");
     nameInput.focus();
 }
-
-function handleSaveAndRespawn() {
+async function handleSaveAndRespawn() {
     let name = nameInput.value.trim();
     if (name === "") name = "Player"; 
 
-    let leaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
-    
-    const newEntry = {
-        name: name,
-        score: score,
-        device: getDeviceType(),
-        date: new Date().toLocaleDateString()
-    };
-    
-    leaderboard.push(newEntry);
-    leaderboard.sort((a, b) => b.score - a.score);
-    leaderboard = leaderboard.slice(0, 5); 
-    
-    localStorage.setItem("snakeLeaderboard", JSON.stringify(leaderboard));
-    
-    resetGame();
-}
+    respawnBtn.innerText = "Saving...";
+    respawnBtn.disabled = true;
 
-function renderLeaderboard() {
-    const leaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
-    leaderboardList.innerHTML = "";
-
-    if (leaderboard.length === 0) {
-        leaderboardList.innerHTML = "<li>No high scores recorded yet</li>";
-        return;
+    try {
+        await supabase.from('leaderboard').insert([
+            { name: name, score: score, device: getDeviceType() }
+        ]);
+    } catch (err) {
+        console.error("Cloud save failed:", err);
     }
 
-    leaderboard.forEach(entry => {
-        const li = document.createElement("li");
-        li.innerHTML = `${entry.name}: <strong>${entry.score}</strong> <span class="device-tag">${entry.device}</span>`;
-        leaderboardList.appendChild(li);
-    });
+    respawnBtn.innerText = "Submit & Respawn ↻";
+    respawnBtn.disabled = false;
+    resetGame();
+}
+async function renderGlobalLeaderboard() {
+    try {
+        const { data, error } = await supabase
+            .from('leaderboard')
+            .select('*')
+            .order('score', { ascending: false })
+            .limit(5);
+
+        if (error) throw error;
+
+        leaderboardList.innerHTML = "";
+        if (!data || data.length === 0) {
+            leaderboardList.innerHTML = "<li>No global scores yet! Be the first!</li>";
+            return;
+        }
+
+        data.forEach(entry => {
+            const li = document.createElement("li");
+            li.innerHTML = `${entry.name}: <strong>${entry.score}</strong> <span class="device-tag">${entry.device}</span>`;
+            leaderboardList.appendChild(li);
+        });
+    } catch (err) {
+        leaderboardList.innerHTML = "<li>Failed to connect to global database</li>";
+        console.error(err);
+    }
 }
 
-function draw() {
-    ctx.fillStyle = "#111";
+function draw() {ctx.fillStyle = "#111625";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "lime";
-    snake.forEach(part => ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 2, gridSize - 2));
-
-    ctx.fillStyle = "red";
-    ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+ ctx.strokeStyle = "rgba(102, 252, 241, 0.05)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < tileCount; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * gridSize, 0);
+        ctx.lineTo(i * gridSize, canvas.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i * gridSize);
+        ctx.lineTo(canvas.width, i * gridSize);
+        ctx.stroke();
+    }
+    snake.forEach((part, index) => {
+        ctx.fillStyle = index === 0 ? "#45f3ff" : "#66fcf1";
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "#66fcf1";
+        ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
+    });
+     ctx.fillStyle = "#ff0055";
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = "#ff0055";
+    ctx.fillRect(food.x * gridSize + 2, food.y * gridSize + 2, gridSize - 4, gridSize - 4);
+   ctx.shadowBlur = 0;
 }
 
 function moveSnake() {
-    // FIXED: Correctly tracking the head segment array index position
     const head = { x: snake[0].x + dx, y: snake[0].y + dy };
     snake.unshift(head);
     snake.pop();
@@ -144,7 +170,6 @@ document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.pr
 respawnBtn.addEventListener("click", handleSaveAndRespawn);
 
 function checkFoodCollision() {
-    // FIXED: Correctly matching against the head coordinate element layout
     if (snake[0].x === food.x && snake[0].y === food.y) {
         score++;
         scoreElement.innerText = score;
@@ -167,7 +192,6 @@ function generateFood() {
 }
 
 function checkGameOver() {
-    // FIXED: Properly isolated check conditions using indices
     const head = snake[0];
     const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
     const hitSelf = snake.slice(1).some(part => part.x === head.x && part.y === head.y);
