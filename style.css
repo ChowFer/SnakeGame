@@ -5,13 +5,9 @@
 }
 
 body {
-    background-color: #0b0c10;
-    background-image: 
-        linear-gradient(rgba(102, 252, 241, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(102, 252, 241, 0.1) 1px, transparent 1px);
-    background-size: 24px 24px;
-    color: #c5c6c7;
-    font-family: 'Courier New', Courier, monospace;
+    background-color: #222;
+    color: white;
+    font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -30,10 +26,9 @@ body {
     padding: 10px;
 }
 
-.glow-text {
-    color: #66fcf1;
-    text-shadow: 0 0 10px #66fcf1;
-    margin: 5px 0 15px 0;
+h1 {
+    margin: 5px 0 10px 0;
+    font-size: 1.5rem;
 }
 
 .canvas-container {
@@ -45,26 +40,25 @@ body {
 }
 
 canvas {
-    background-color: #1f2833;
-    border: 3px solid #66fcf1;
-    box-shadow: 0 0 25px rgba(102, 252, 241, 0.4);
+    background-color: #111;
+    border: 4px solid #fff;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
     width: 100%;
     height: 100%;
 }
 
-/* Menu Overlay Design */
 .overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(11, 12, 16, 0.95);
+    background-color: rgba(0, 0, 0, 0.9);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border: 3px solid #ff0055;
+    border: 4px solid #fff;
     z-index: 10;
 }
 
@@ -72,20 +66,18 @@ canvas {
     display: none !important;
 }
 
-.glow-red {
-    color: #ff0055;
+.overlay h2 {
+    color: #ff3333;
     font-size: 2.5rem;
     margin: 0 0 10px 0;
-    text-shadow: 0 0 15px #ff0055;
+    text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
 }
 
 .overlay p {
     font-size: 1.2rem;
     margin: 5px 0;
-    color: #c5c6c7;
 }
 
-/* Name Input Styling */
 .input-container {
     margin-top: 15px;
     display: flex;
@@ -95,14 +87,14 @@ canvas {
 
 .input-container label {
     font-size: 0.9rem;
-    color: #45f3ff;
+    color: #aaa;
     margin-bottom: 5px;
 }
 
 #playerName {
-    background-color: #0b0c10;
-    color: #66fcf1;
-    border: 2px solid #45f3ff;
+    background-color: #333;
+    color: white;
+    border: 2px solid #555;
     padding: 8px 12px;
     font-size: 1.1rem;
     text-align: center;
@@ -114,7 +106,7 @@ canvas {
 
 #playerName:focus {
     outline: none;
-    box-shadow: 0 0 10px #45f3ff;
+    border-color: lime;
 }
 
 #respawnBtn {
@@ -122,20 +114,18 @@ canvas {
     padding: 12px 30px;
     font-size: 1.2rem;
     font-weight: bold;
-    background-color: #66fcf1;
-    color: #0b0c10;
+    background-color: lime;
+    color: black;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(102, 252, 241, 0.4);
-    font-family: inherit;
+    box-shadow: 0 4px 10px rgba(0, 255, 0, 0.3);
 }
 
 #respawnBtn:active {
     transform: scale(0.95);
 }
 
-/* Mobile Controls */
 .mobile-controls {
     display: flex;
     flex-direction: column;
@@ -154,9 +144,9 @@ canvas {
 .ctrl-btn {
     width: 60px;
     height: 60px;
-    background-color: #1f2833;
-    color: #66fcf1;
-    border: 2px solid #45f3ff;
+    background-color: #444;
+    color: white;
+    border: 2px solid #666;
     border-radius: 50%;
     font-size: 1.5rem;
     display: flex;
@@ -167,22 +157,20 @@ canvas {
 }
 
 .ctrl-btn:active {
-    background-color: #66fcf1;
-    color: #0b0c10;
+    background-color: lime;
+    color: black;
 }
 
 .spacer {
     width: 60px;
 }
 
-/* Leaderboard Board Elements */
 .leaderboard-container {
     margin-top: 25px;
-    background-color: #1f2833;
-    border: 2px solid #45f3ff;
-    box-shadow: 0 0 15px rgba(69, 243, 255, 0.1);
+    background-color: #111;
+    border: 2px solid #444;
     padding: 15px;
-    width: 340px;
+    width: 320px;
     max-width: 90vw;
     border-radius: 8px;
     text-align: left;
@@ -191,7 +179,7 @@ canvas {
 .leaderboard-container h3 {
     margin: 0 0 10px 0;
     text-align: center;
-    border-bottom: 2px solid #45f3ff;
+    border-bottom: 1px solid #444;
     padding-bottom: 5px;
 }
 
@@ -201,20 +189,18 @@ canvas {
 }
 
 .leaderboard-container li {
-    margin: 8px 0;
+    margin: 6px 0;
     font-size: 1rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-family: monospace;
 }
 
 .device-tag {
     font-size: 0.75rem;
-    background-color: #0b0c10;
-    padding: 2px 6px;
+    background-color: #333;
+    padding: 1px 5px;
     border-radius: 4px;
     margin-left: 5px;
-    color: #888;
+    color: #aaa;
 }
 
 @media (min-width: 768px) {

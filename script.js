@@ -1,7 +1,3 @@
-const SUPABASE_URL = "https://qwloipgyebuzhwrzexwd.supabase.co/rest/v1/";
-const SUPABASE_ANON_KEY = "sb_publishable_iObsx73FyMNLDis5Zq0l2A_AmXFPdk4";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreElement = document.getElementById("score");
@@ -23,18 +19,21 @@ let score = 0;
 let gameInterval;
 let isGameOver = false;
 
+const GLOBAL_BIN_ID = "snake_global_board_prod_v1";
+const API_URL = `https://restful-api.dev`;
+
 function getDeviceType() {
     const ua = navigator.userAgent;
-    if (/tablet|ipad|playbook|silk/i.test(ua)) return "Tab";
-    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated/i.test(ua)) return "Phn";
+    if (/tablet|ipad|playbook|silk/i.test(ua)) return "Tablet";
+    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated/i.test(ua)) return "Mobile";
     return "PC";
 }
 
 function startGame() {
     isGameOver = false;
     gameOverMenu.classList.add("hidden");
-    gameInterval = setInterval(update, 110);
-    renderGlobalLeaderboard();
+    gameInterval = setInterval(update, 120);
+    fetchGlobalScores();
 }
 
 function update() {
@@ -59,77 +58,106 @@ function showGameOverMenu() {
     gameOverMenu.classList.remove("hidden");
     nameInput.focus();
 }
+
 async function handleSaveAndRespawn() {
     let name = nameInput.value.trim();
     if (name === "") name = "Player"; 
 
-    respawnBtn.innerText = "Saving...";
+    respawnBtn.innerText = "Syncing...";
     respawnBtn.disabled = true;
 
+    const payload = {
+        name: "SnakeScoreEntry",
+        data: {
+            gameId: GLOBAL_BIN_ID,
+            playerName: name,
+            score: score,
+            device: getDeviceType(),
+            timestamp: Date.now()
+        }
+    };
+
     try {
-        await supabase.from('leaderboard').insert([
-            { name: name, score: score, device: getDeviceType() }
-        ]);
+        await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
     } catch (err) {
-        console.error("Cloud save failed:", err);
+        console.error(err);
     }
 
-    respawnBtn.innerText = "Submit & Respawn ↻";
+    respawnBtn.innerText = "Save & Respawn ↻";
     respawnBtn.disabled = false;
     resetGame();
 }
-async function renderGlobalLeaderboard() {
-    try {
-        const { data, error } = await supabase
-            .from('leaderboard')
-            .select('*')
-            .order('score', { ascending: false })
-            .limit(5);
 
-        if (error) throw error;
+async function fetchGlobalScores() {
+    leaderboardList.innerHTML = "<li>Loading global scores...</li>";
+    try {
+        const response = await fetch(API_URL);
+        const allItems = await response.json();
+        
+        let gameScores = allItems
+            .filter(item => item.data && item.data.gameId === GLOBAL_BIN_ID)
+            .map(item => item.data);
+
+        gameScores.sort((a, b) => b.score - a.score);
+        
+        const uniqueScores = [];
+        const seenNames = new Set();
+        for (const entry of gameScores) {
+            if (!seenNames.has(entry.playerName)) {
+                seenNames.add(entry.playerName);
+                uniqueScores.push(entry);
+            }
+            if (uniqueScores.length >= 5) break;
+        }
 
         leaderboardList.innerHTML = "";
-        if (!data || data.length === 0) {
-            leaderboardList.innerHTML = "<li>No global scores yet! Be the first!</li>";
+        if (uniqueScores.length === 0) {
+            leaderboardList.innerHTML = "<li>No global scores yet.</li>";
             return;
         }
 
-        data.forEach(entry => {
+        uniqueScores.forEach(entry => {
             const li = document.createElement("li");
-            li.innerHTML = `${entry.name}: <strong>${entry.score}</strong> <span class="device-tag">${entry.device}</span>`;
+            li.innerHTML = `${entry.playerName}: <strong>${entry.score}</strong> <span class="device-tag">${entry.device}</span>`;
             leaderboardList.appendChild(li);
         });
     } catch (err) {
-        leaderboardList.innerHTML = "<li>Failed to connect to global database</li>";
-        console.error(err);
+        leaderboardList.innerHTML = "<li>Global server busy.</li>";
+        renderLocalFallback();
     }
 }
 
-function draw() {ctx.fillStyle = "#111625";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
- ctx.strokeStyle = "rgba(102, 252, 241, 0.05)";
-    ctx.lineWidth = 1;
-    for (let i = 0; i < tileCount; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * gridSize, 0);
-        ctx.lineTo(i * gridSize, canvas.height);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, i * gridSize);
-        ctx.lineTo(canvas.width, i * gridSize);
-        ctx.stroke();
+function renderLocalFallback() {
+    let leaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
+    leaderboardList.innerHTML = "";
+    if (leaderboard.length === 0) {
+        leaderboardList.innerHTML = "<li>No offline high scores recorded</li>";
+        return;
     }
-    snake.forEach((part, index) => {
-        ctx.fillStyle = index === 0 ? "#45f3ff" : "#66fcf1";
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = "#66fcf1";
-        ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
+    leaderboard.slice(0, 5).forEach(entry => {
+        const li = document.createElement("li");
+        li.innerHTML = `${entry.name}: <strong>${entry.score}</strong> <span class="device-tag">${entry.device} (Local)</span>`;
+        leaderboardList.appendChild(li);
     });
-     ctx.fillStyle = "#ff0055";
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = "#ff0055";
-    ctx.fillRect(food.x * gridSize + 2, food.y * gridSize + 2, gridSize - 4, gridSize - 4);
-   ctx.shadowBlur = 0;
+}
+
+function draw() {
+    for (let r = 0; r < tileCount; r++) {
+        for (let c = 0; c < tileCount; c++) {
+            ctx.fillStyle = (r + c) % 2 === 0 ? "#111" : "#1a1a1a";
+            ctx.fillRect(c * gridSize, r * gridSize, gridSize, gridSize);
+        }
+    }
+
+    ctx.fillStyle = "lime";
+    snake.forEach(part => ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 2, gridSize - 2));
+
+    ctx.fillStyle = "red";
+    ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
 }
 
 function moveSnake() {
@@ -155,7 +183,6 @@ window.addEventListener("keydown", e => {
         handleSaveAndRespawn();
         return;
     }
-
     if (e.key === "ArrowUp") changeDirection("UP");
     if (e.key === "ArrowDown") changeDirection("DOWN");
     if (e.key === "ArrowLeft") changeDirection("LEFT");
@@ -192,6 +219,7 @@ function generateFood() {
 }
 
 function checkGameOver() {
+    if (!snake || snake.length === 0) return true;
     const head = snake[0];
     const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
     const hitSelf = snake.slice(1).some(part => part.x === head.x && part.y === head.y);

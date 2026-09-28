@@ -3,21 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Global Cyber-Snake Game</title>
+    <title>Classic Grid Snake Game</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Supabase CDN Library -->
-    <script src="http://unpkg.com"></script>
 </head>
 <body>
     <div class="game-container">
-        <h1 class="glow-text">Score: <span id="score">0</span></h1>
+        <h1>Score: <span id="score">0</span></h1>
         
         <div class="canvas-container">
             <canvas id="gameCanvas" width="400" height="400"></canvas>
             
-            <!-- Game Over Menu Overlay -->
             <div id="gameOverMenu" class="overlay hidden">
-                <h2 class="glow-red">GAME OVER</h2>
+                <h2>GAME OVER</h2>
                 <p>Your Score: <span id="finalScore">0</span></p>
                 <p>Device: <span id="deviceType">PC</span></p>
                 
@@ -26,11 +23,10 @@
                     <input type="text" id="playerName" placeholder="Player" maxlength="10">
                 </div>
 
-                <button id="respawnBtn">Submit & Respawn ↻</button>
+                <button id="respawnBtn">Save & Respawn ↻</button>
             </div>
         </div>
         
-        <!-- Mobile Controls -->
         <div class="mobile-controls">
             <button class="ctrl-btn up" id="btnUp">▲</button>
             <div class="middle-row">
@@ -41,9 +37,8 @@
             <button class="ctrl-btn down" id="btnDown">▼</button>
         </div>
 
-        <!-- Global Leaderboard section -->
         <div class="leaderboard-container">
-            <h3 class="glow-text">🌍 Global Leaderboard</h3>
+            <h3>🌍 Global Leaderboard</h3>
             <ol id="leaderboardList">
                 <li>Loading global scores...</li>
             </ol>
