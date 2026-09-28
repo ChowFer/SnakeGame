@@ -62,10 +62,7 @@ function showGameOverMenu() {
 async function handleSaveAndRespawn() {
     let name = nameInput.value.trim();
     if (name === "") name = "Player"; 
-    
-    if (name.length > 100) {
-        name = name.substring(0, 100);
-    }
+    if (name.length > 100) name = name.substring(0, 100);
 
     const newEntry = {
         name: name,
@@ -78,7 +75,6 @@ async function handleSaveAndRespawn() {
     localLeaderboard.sort((a, b) => b.score - a.score);
     localLeaderboard = localLeaderboard.slice(0, 5);
     localStorage.setItem("snakeLeaderboard", JSON.stringify(localLeaderboard));
-
     renderLeaderboardList(localLeaderboard);
 
     respawnBtn.innerText = "Syncing...";
@@ -166,10 +162,8 @@ function draw() {
             ctx.fillRect(c * gridSize, r * gridSize, gridSize, gridSize);
         }
     }
-
     ctx.fillStyle = "lime";
     snake.forEach(part => ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 2, gridSize - 2));
-
     ctx.fillStyle = "red";
     ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
 }
