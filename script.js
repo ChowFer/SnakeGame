@@ -33,7 +33,7 @@ function startGame() {
     isGameOver = false;
     gameOverMenu.classList.add("hidden");
     gameInterval = setInterval(update, 120);
-    fetchGlobalScores();
+    loadScoresAndRender();
 }
 
 function update() {
@@ -62,6 +62,21 @@ function showGameOverMenu() {
 async function handleSaveAndRespawn() {
     let name = nameInput.value.trim();
     if (name === "") name = "Player"; 
+
+    const newEntry = {
+        name: name,
+        score: score,
+        device: getDeviceType(),
+        date: new Date().toLocaleDateString()
+    };
+
+    let localLeaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
+    localLeaderboard.push(newEntry);
+    localLeaderboard.sort((a, b) => b.score - a.score);
+    localLeaderboard = localLeaderboard.slice(0, 5);
+    localStorage.setItem("snakeLeaderboard", JSON.stringify(localLeaderboard));
+
+    renderLeaderboardList(localLeaderboard);
 
     respawnBtn.innerText = "Syncing...";
     respawnBtn.disabled = true;
@@ -92,8 +107,10 @@ async function handleSaveAndRespawn() {
     resetGame();
 }
 
-async function fetchGlobalScores() {
-    leaderboardList.innerHTML = "<li>Loading global scores...</li>";
+async function loadScoresAndRender() {
+    let localLeaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
+    renderLeaderboardList(localLeaderboard);
+
     try {
         const response = await fetch(API_URL);
         const allItems = await response.json();
@@ -109,38 +126,32 @@ async function fetchGlobalScores() {
         for (const entry of gameScores) {
             if (!seenNames.has(entry.playerName)) {
                 seenNames.add(entry.playerName);
-                uniqueScores.push(entry);
+                uniqueScores.push({
+                    name: entry.playerName,
+                    score: entry.score,
+                    device: entry.device
+                });
             }
             if (uniqueScores.length >= 5) break;
         }
 
-        leaderboardList.innerHTML = "";
-        if (uniqueScores.length === 0) {
-            leaderboardList.innerHTML = "<li>No global scores yet.</li>";
-            return;
+        if (uniqueScores.length > 0) {
+            renderLeaderboardList(uniqueScores);
         }
-
-        uniqueScores.forEach(entry => {
-            const li = document.createElement("li");
-            li.innerHTML = `${entry.playerName}: <strong>${entry.score}</strong> <span class="device-tag">${entry.device}</span>`;
-            leaderboardList.appendChild(li);
-        });
     } catch (err) {
-        leaderboardList.innerHTML = "<li>Global server busy.</li>";
-        renderLocalFallback();
+        console.error(err);
     }
 }
 
-function renderLocalFallback() {
-    let leaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
+function renderLeaderboardList(scoreArray) {
     leaderboardList.innerHTML = "";
-    if (leaderboard.length === 0) {
-        leaderboardList.innerHTML = "<li>No offline high scores recorded</li>";
+    if (scoreArray.length === 0) {
+        leaderboardList.innerHTML = "<li>No high scores recorded yet</li>";
         return;
     }
-    leaderboard.slice(0, 5).forEach(entry => {
+    scoreArray.forEach(entry => {
         const li = document.createElement("li");
-        li.innerHTML = `${entry.name}: <strong>${entry.score}</strong> <span class="device-tag">${entry.device} (Local)</span>`;
+        li.innerHTML = `${entry.name}: <strong>${entry.score}</strong> <span class="device-tag">${entry.device}</span>`;
         leaderboardList.appendChild(li);
     });
 }
