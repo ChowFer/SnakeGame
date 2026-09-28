@@ -62,6 +62,10 @@ function showGameOverMenu() {
 async function handleSaveAndRespawn() {
     let name = nameInput.value.trim();
     if (name === "") name = "Player"; 
+    
+    if (name.length > 100) {
+        name = name.substring(0, 100);
+    }
 
     const newEntry = {
         name: name,
@@ -172,7 +176,7 @@ function draw() {
 }
 
 function moveSnake() {
-    const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+    const head = { x: snake.x + dx, y: snake.y + dy };
     snake.unshift(head);
     snake.pop();
 }
@@ -208,7 +212,7 @@ document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.pr
 respawnBtn.addEventListener("click", handleSaveAndRespawn);
 
 function checkFoodCollision() {
-    if (snake[0].x === food.x && snake[0].y === food.y) {
+    if (snake.x === food.x && snake.y === food.y) {
         score++;
         scoreElement.innerText = score;
         growSnake();
@@ -231,7 +235,7 @@ function generateFood() {
 
 function checkGameOver() {
     if (!snake || snake.length === 0) return true;
-    const head = snake[0];
+    const head = snake;
     const hitWall = head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
     const hitSelf = snake.slice(1).some(part => part.x === head.x && part.y === head.y);
     return hitWall || hitSelf;
