@@ -19,7 +19,7 @@ let score = 0;
 let gameInterval;
 let isGameOver = false;
 
-const GLOBAL_BIN_ID = "snake_global_board_prod_v1";
+const GLOBAL_BIN_ID = "snake_global_board_prod_v2";
 const API_URL = `https://restful-api.dev`;
 
 function getDeviceType() {
@@ -70,8 +70,7 @@ async function handleSaveAndRespawn() {
     const newEntry = {
         name: name,
         score: score,
-        device: getDeviceType(),
-        date: new Date().toLocaleDateString()
+        device: getDeviceType()
     };
 
     let localLeaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
