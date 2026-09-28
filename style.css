@@ -206,6 +206,45 @@ canvas {
     color: #aaa;
 }
 
+.sync-box {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#syncCodeInput {
+    width: 100%;
+    background-color: #222;
+    border: 1px solid #555;
+    color: white;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.sync-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.sync-buttons button {
+    flex: 1;
+    background-color: #444;
+    color: white;
+    border: 1px solid #666;
+    padding: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.sync-buttons button:active {
+    background-color: #555;
+}
+
 @media (min-width: 768px) {
     .mobile-controls {
         display: none;

@@ -7,6 +7,9 @@ const deviceTypeElement = document.getElementById("deviceType");
 const nameInput = document.getElementById("playerName");
 const respawnBtn = document.getElementById("respawnBtn");
 const leaderboardList = document.getElementById("leaderboardList");
+const syncCodeInput = document.getElementById("syncCodeInput");
+const copyScoresBtn = document.getElementById("copyScoresBtn");
+const importScoresBtn = document.getElementById("importScoresBtn");
 
 const gridSize = 20;
 const tileCount = canvas.width / gridSize;
@@ -18,9 +21,6 @@ let dy = 0;
 let score = 0;
 let gameInterval;
 let isGameOver = false;
-
-const GLOBAL_BIN_ID = "snake_global_board_prod_v2";
-const API_URL = `https://restful-api.dev`;
 
 function getDeviceType() {
     const ua = navigator.userAgent;
@@ -59,7 +59,7 @@ function showGameOverMenu() {
     nameInput.focus();
 }
 
-async function handleSaveAndRespawn() {
+function handleSaveAndRespawn() {
     let name = nameInput.value.trim();
     if (name === "") name = "Player"; 
     if (name.length > 100) name = name.substring(0, 100);
@@ -70,76 +70,19 @@ async function handleSaveAndRespawn() {
         device: getDeviceType()
     };
 
-    let localLeaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
+    let localLeaderboard = JSON.parse(localStorage.getItem("sharedSnakeBoard")) || [];
     localLeaderboard.push(newEntry);
     localLeaderboard.sort((a, b) => b.score - a.score);
     localLeaderboard = localLeaderboard.slice(0, 5);
-    localStorage.setItem("snakeLeaderboard", JSON.stringify(localLeaderboard));
+    localStorage.setItem("sharedSnakeBoard", JSON.stringify(localLeaderboard));
+
     renderLeaderboardList(localLeaderboard);
-
-    respawnBtn.innerText = "Syncing...";
-    respawnBtn.disabled = true;
-
-    const payload = {
-        name: "SnakeScoreEntry",
-        data: {
-            gameId: GLOBAL_BIN_ID,
-            playerName: name,
-            score: score,
-            device: getDeviceType(),
-            timestamp: Date.now()
-        }
-    };
-
-    try {
-        await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-    } catch (err) {
-        console.error(err);
-    }
-
-    respawnBtn.innerText = "Save & Respawn ↻";
-    respawnBtn.disabled = false;
     resetGame();
 }
 
-async function loadScoresAndRender() {
-    let localLeaderboard = JSON.parse(localStorage.getItem("snakeLeaderboard")) || [];
+function loadScoresAndRender() {
+    let localLeaderboard = JSON.parse(localStorage.getItem("sharedSnakeBoard")) || [];
     renderLeaderboardList(localLeaderboard);
-
-    try {
-        const response = await fetch(API_URL);
-        const allItems = await response.json();
-        
-        let gameScores = allItems
-            .filter(item => item.data && item.data.gameId === GLOBAL_BIN_ID)
-            .map(item => item.data);
-
-        gameScores.sort((a, b) => b.score - a.score);
-        
-        const uniqueScores = [];
-        const seenNames = new Set();
-        for (const entry of gameScores) {
-            if (!seenNames.has(entry.playerName)) {
-                seenNames.add(entry.playerName);
-                uniqueScores.push({
-                    name: entry.playerName,
-                    score: entry.score,
-                    device: entry.device
-                });
-            }
-            if (uniqueScores.length >= 5) break;
-        }
-
-        if (uniqueScores.length > 0) {
-            renderLeaderboardList(uniqueScores);
-        }
-    } catch (err) {
-        console.error(err);
-    }
 }
 
 function renderLeaderboardList(scoreArray) {
@@ -176,7 +119,7 @@ function moveSnake() {
 
 function changeDirection(direction) {
     if (isGameOver) return;
-    if (document.activeElement === nameInput) return;
+    if (document.activeElement === nameInput || document.activeElement === syncCodeInput) return;
 
     switch (direction) {
         case "UP":    if (dy === 0) { dx = 0; dy = -1; } break;
@@ -203,6 +146,43 @@ document.getElementById("btnLeft").addEventListener("touchstart", (e) => { e.pre
 document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); changeDirection("RIGHT"); });
 
 respawnBtn.addEventListener("click", handleSaveAndRespawn);
+
+copyScoresBtn.addEventListener("click", () => {
+    const scores = localStorage.getItem("sharedSnakeBoard") || "[]";
+    const encoded = btoa(unescape(encodeURIComponent(scores)));
+    navigator.clipboard.writeText(encoded);
+    alert("Scores copied to clipboard! Paste this code on your other device.");
+});
+
+importScoresBtn.addEventListener("click", () => {
+    const code = syncCodeInput.value.trim();
+    if (!code) return;
+    try {
+        const decoded = decodeURIComponent(escape(atob(code)));
+        const newScores = JSON.parse(decoded);
+        if (Array.isArray(newScores)) {
+            let currentScores = JSON.parse(localStorage.getItem("sharedSnakeBoard")) || [];
+            let combined = [...currentScores, ...newScores];
+            
+            let uniqueMap = new Map();
+            combined.forEach(item => {
+                const key = `${item.name}_${item.score}_${item.device}`;
+                uniqueMap.set(key, item);
+            });
+            
+            let finalScores = Array.from(uniqueMap.values());
+            finalScores.sort((a, b) => b.score - a.score);
+            finalScores = finalScores.slice(0, 5);
+            
+            localStorage.setItem("sharedSnakeBoard", JSON.stringify(finalScores));
+            renderLeaderboardList(finalScores);
+            syncCodeInput.value = "";
+            alert("Leaderboards synced successfully!");
+        }
+    } catch (e) {
+        alert("Invalid sync code.");
+    }
+});
 
 function checkFoodCollision() {
     if (snake[0].x === food.x && snake[0].y === food.y) {
