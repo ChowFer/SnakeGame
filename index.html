@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Score: <span id="score">0</span></h1>
+        <h1>Score: <span id="score">0</span> <span id="lifeIcon"></span></h1>
         
         <div class="canvas-container">
             <canvas id="gameCanvas" width="400" height="400"></canvas>
@@ -38,15 +38,10 @@
         </div>
 
         <div class="leaderboard-container">
-            <h3>🏆 Leaderboard</h3>
-            <ol id="leaderboardList"></ol>
-            <div class="sync-box">
-                <input type="text" id="syncCodeInput" placeholder="Paste code to import">
-                <div class="sync-buttons">
-                    <button id="copyScoresBtn">Export Code</button>
-                    <button id="importScoresBtn">Import Code</button>
-                </div>
-            </div>
+            <h3>🌍 Global Leaderboard</h3>
+            <ol id="leaderboardList">
+                <li>Loading global scores...</li>
+            </ol>
         </div>
     </div>
     <script src="script.js"></script>
