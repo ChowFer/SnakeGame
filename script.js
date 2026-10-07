@@ -184,10 +184,12 @@ window.addEventListener("keydown", e => {
         handleSaveAndRespawn();
         return;
     }
-    if (e.key === "ArrowUp") changeDirection("UP");
-    if (e.key === "ArrowDown") changeDirection("DOWN");
-    if (e.key === "ArrowLeft") changeDirection("LEFT");
-    if (e.key === "ArrowRight") changeDirection("RIGHT");
+    
+    const key = e.key.toLowerCase();
+    if (e.key === "ArrowUp" || key === "w") changeDirection("UP");
+    if (e.key === "ArrowDown" || key === "s") changeDirection("DOWN");
+    if (e.key === "ArrowLeft" || key === "a") changeDirection("LEFT");
+    if (e.key === "ArrowRight" || key === "d") changeDirection("RIGHT");
 });
 
 document.getElementById("btnUp").addEventListener("touchstart", (e) => { e.preventDefault(); changeDirection("UP"); });
